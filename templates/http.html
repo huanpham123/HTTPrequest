@@ -42,7 +42,7 @@
     <h1>HTTP Request App</h1>
     <div class="container">
         <label for="url">URL:</label>
-        <input type="text" id="url" placeholder="Enter URL" required />
+        <input type="text" id="url" placeholder="Enter URL" />
 
         <label for="method">Method:</label>
         <select id="method">
@@ -73,7 +73,7 @@
 
         function startListening() {
             if (!("webkitSpeechRecognition" in window)) {
-                alert("Speech recognition is not supported in this browser.");
+                alert("Nhận diện giọng nói không được hỗ trợ trên trình duyệt này.");
                 return;
             }
 
@@ -84,7 +84,7 @@
             recognition.onstart = function() {
                 recognizing = true;
                 microphoneBtn.disabled = true;
-                microphoneBtn.innerText = "Listening...";
+                microphoneBtn.innerText = "Nghe...";
             };
 
             recognition.onresult = function(event) {
@@ -97,11 +97,26 @@
                 sendRequest();  // Automatically send request after getting speech result
             };
 
-            recognition.onerror = function() {
+            recognition.onerror = function(event) {
                 recognizing = false;
                 microphoneBtn.disabled = false;
                 microphoneBtn.innerText = "🎤";
-                alert("Error occurred during speech recognition. Please try again.");
+                
+                let errorMessage = "Lỗi xảy ra: ";
+                switch (event.error) {
+                    case 'no-speech':
+                        errorMessage += "Không có âm thanh nào được nhận diện.";
+                        break;
+                    case 'audio-capture':
+                        errorMessage += "Không thể lấy âm thanh từ microphone. Vui lòng kiểm tra thiết bị.";
+                        break;
+                    case 'not-allowed':
+                        errorMessage += "Truy cập microphone bị từ chối. Hãy kiểm tra quyền truy cập.";
+                        break;
+                    default:
+                        errorMessage += event.error;
+                }
+                alert(errorMessage);
             };
 
             recognition.onend = function() {
@@ -117,23 +132,16 @@
 
         // Function to send HTTP request
         function sendRequest() {
-            const url = document.getElementById("url").value.trim();
+            const url = document.getElementById("url").value;
             const method = document.getElementById("method").value;
-            const headers = document.getElementById("headers").value.trim();
-            const data = document.getElementById("data").value.trim();
-
-            if (!url) {
-                alert("URL is required.");
-                return;
-            }
+            const headers = document.getElementById("headers").value;
+            const data = document.getElementById("data").value;
 
             const headersObj = {};
             if (headers) {
                 headers.split("\n").forEach(line => {
                     const [key, value] = line.split(": ");
-                    if (key && value) { // Ensure key and value are not empty
-                        headersObj[key] = value;
-                    }
+                    headersObj[key] = value;
                 });
             }
 
@@ -149,17 +157,12 @@
                     data: data
                 })
             })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
+            .then(response => response.json())
             .then(data => {
                 document.getElementById("response").innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
             })
             .catch(error => {
-                document.getElementById("response").innerHTML = `<pre>Error: ${error.message}</pre>`;
+                document.getElementById("response").innerHTML = `<pre>${error}</pre>`;
             });
         }
     </script>
