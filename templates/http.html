@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTTP Request App</title>
+    <style>
+        /* CSS styling for the UI */
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 50px;
+        }
+        .container {
+            width: 300px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .microphone-btn {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            width: 50px; /* Make width and height equal to ensure a circle */
+            height: 50px;
+            cursor: pointer;
+            border-radius: 50%; /* Make button round */
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .microphone-btn:disabled {
+            background-color: gray;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <h1>HTTP Request App</h1>
+    <div class="container">
+        <label for="url">URL:</label>
+        <input type="text" id="url" placeholder="Enter URL" required />
+
+        <label for="method">Method:</label>
+        <select id="method">
+            <option value="GET">GET</option>
+            <option value="POST">POST</option>
+            <option value="PUT">PUT</option>
+            <option value="DELETE">DELETE</option>
+        </select>
+
+        <label for="headers">Headers (optional):</label>
+        <textarea id="headers" placeholder="Enter headers as key: value"></textarea>
+
+        <label for="data">Data (optional):</label>
+        <textarea id="data" placeholder="Enter data as JSON"></textarea>
+
+        <button onclick="sendRequest()">Send Request</button>
+
+        <!-- Microphone button for speech-to-text -->
+        <button id="microphone" class="microphone-btn" onclick="startListening()">🎤</button>
+
+        <div id="response" style="margin-top: 20px;"></div>
+    </div>
+
+    <script>
+        // Speech-to-Text functionality using Web Speech API
+        const microphoneBtn = document.getElementById("microphone");
+        let recognizing = false;
+
+        function startListening() {
+            if (!("webkitSpeechRecognition" in window)) {
+                alert("Speech recognition is not supported in this browser.");
+                return;
+            }
+
+            const recognition = new webkitSpeechRecognition();
+            recognition.lang = "vi-VN";  // Set language to Vietnamese
+            recognition.interimResults = false;
+
+            recognition.onstart = function() {
+                recognizing = true;
+                microphoneBtn.disabled = true;
+                microphoneBtn.innerText = "Listening...";
+            };
+
+            recognition.onresult = function(event) {
+                recognizing = false;
+                microphoneBtn.disabled = false;
+                microphoneBtn.innerText = "🎤";
+
+                const speechResult = event.results[0][0].transcript;
+                document.getElementById("url").value = `http://192.168.1.14/ask?prompt=${encodeURIComponent(speechResult)}`;
+                sendRequest();  // Automatically send request after getting speech result
+            };
+
+            recognition.onerror = function() {
+                recognizing = false;
+                microphoneBtn.disabled = false;
+                microphoneBtn.innerText = "🎤";
+                alert("Error occurred during speech recognition. Please try again.");
+            };
+
+            recognition.onend = function() {
+                recognizing = false;
+                microphoneBtn.disabled = false;
+                microphoneBtn.innerText = "🎤";
+            };
+
+            if (!recognizing) {
+                recognition.start();
+            }
+        }
+
+        // Function to send HTTP request
+        function sendRequest() {
+            const url = document.getElementById("url").value.trim();
+            const method = document.getElementById("method").value;
+            const headers = document.getElementById("headers").value.trim();
+            const data = document.getElementById("data").value.trim();
+
+            if (!url) {
+                alert("URL is required.");
+                return;
+            }
+
+            const headersObj = {};
+            if (headers) {
+                headers.split("\n").forEach(line => {
+                    const [key, value] = line.split(": ");
+                    if (key && value) { // Ensure key and value are not empty
+                        headersObj[key] = value;
+                    }
+                });
+            }
+
+            fetch("/send-request", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: new URLSearchParams({
+                    url: url,
+                    method: method,
+                    headers: JSON.stringify(headersObj),
+                    data: data
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                document.getElementById("response").innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            })
+            .catch(error => {
+                document.getElementById("response").innerHTML = `<pre>Error: ${error.message}</pre>`;
+            });
+        }
+    </script>
+</body>
+</html>
