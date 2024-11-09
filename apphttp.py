@@ -4,8 +4,7 @@ import time
 
 app = Flask(__name__)
 
-# Thời gian chờ mặc định cho các yêu cầu HTTP (tính bằng giây)
-DEFAULT_TIMEOUT = 10  # thời gian chờ là 10 giây
+DEFAULT_TIMEOUT = 10  # Thời gian chờ mặc định
 
 @app.route('/')
 def index():
@@ -17,9 +16,9 @@ def send_request():
     method = request.form.get('method')
     headers = request.form.get('headers')
     data = request.form.get('data')
-    timeout = request.form.get('timeout', DEFAULT_TIMEOUT)  # Lấy thời gian chờ từ form (mặc định 10 giây)
+    timeout = request.form.get('timeout', DEFAULT_TIMEOUT)
 
-    # Chuyển đổi headers thành dictionary nếu có
+    # Chuyển headers thành dictionary
     headers_dict = {}
     if headers:
         for line in headers.splitlines():
@@ -27,11 +26,9 @@ def send_request():
             if len(key_value) == 2:
                 headers_dict[key_value[0].strip()] = key_value[1].strip()
 
-    # Đo thời gian thực hiện yêu cầu
     start_time = time.time()
 
     try:
-        # Gửi yêu cầu HTTP với thời gian chờ và phương thức đã chọn
         if method == "GET":
             response = requests.get(url, headers=headers_dict, timeout=int(timeout))
         elif method == "POST":
@@ -41,18 +38,14 @@ def send_request():
         elif method == "DELETE":
             response = requests.delete(url, headers=headers_dict, timeout=int(timeout))
 
-        # Tính toán thời gian thực hiện
         end_time = time.time()
-        elapsed_time = end_time - start_time  # thời gian thực hiện yêu cầu (tính bằng giây)
-
-        # Ghi log về thời gian thực hiện và các thông tin khác
-        app.logger.info(f"Request to {url} took {elapsed_time:.2f} seconds")
+        elapsed_time = end_time - start_time
 
         return jsonify({
             'status_code': response.status_code,
             'headers': dict(response.headers),
             'content': response.text,
-            'elapsed_time': f"{elapsed_time:.2f} seconds"  # Thêm thời gian thực hiện vào kết quả
+            'elapsed_time': f"{elapsed_time:.2f} seconds"
         })
 
     except requests.exceptions.Timeout:
@@ -61,5 +54,4 @@ def send_request():
         return jsonify({'error': str(e)})
 
 if __name__ == '__main__':
-    # Cấu hình Flask chạy trên host và port mặc định cho Vercel
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True)
