@@ -6,7 +6,7 @@ import os
 app = Flask(__name__)
 
 # Thời gian chờ mặc định cho các yêu cầu HTTP (tính bằng giây)
-DEFAULT_TIMEOUT = 10  # thời gian chờ là 10 giây
+DEFAULT_TIMEOUT = 100  # thời gian chờ là 10 giây
 
 # Tạo một session để giữ kết nối HTTP lâu dài
 session = requests.Session()
