@@ -1,14 +1,9 @@
 from flask import Flask, request, render_template, jsonify
 import requests
-import time
 
 app = Flask(__name__)
 
-DEFAULT_TIMEOUT = 10  # Thời gian chờ mặc định
-
-@app.route('/')
-def index():
-    return render_template('http.html')
+DEFAULT_TIMEOUT = 20  # Tăng thời gian timeout lên 20 giây
 
 @app.route('/send-request', methods=['POST'])
 def send_request():
@@ -16,42 +11,28 @@ def send_request():
     method = request.form.get('method')
     headers = request.form.get('headers')
     data = request.form.get('data')
-    timeout = request.form.get('timeout', DEFAULT_TIMEOUT)
-
-    # Chuyển headers thành dictionary
-    headers_dict = {}
-    if headers:
-        for line in headers.splitlines():
-            key_value = line.split(": ", 1)
-            if len(key_value) == 2:
-                headers_dict[key_value[0].strip()] = key_value[1].strip()
-
-    start_time = time.time()
+    timeout = int(request.form.get('timeout', DEFAULT_TIMEOUT))
 
     try:
         if method == "GET":
-            response = requests.get(url, headers=headers_dict, timeout=int(timeout))
+            response = requests.get(url, headers=headers, timeout=timeout)
         elif method == "POST":
-            response = requests.post(url, headers=headers_dict, json=data, timeout=int(timeout))
+            response = requests.post(url, headers=headers, json=data, timeout=timeout)
         elif method == "PUT":
-            response = requests.put(url, headers=headers_dict, json=data, timeout=int(timeout))
+            response = requests.put(url, headers=headers, json=data, timeout=timeout)
         elif method == "DELETE":
-            response = requests.delete(url, headers=headers_dict, timeout=int(timeout))
-
-        end_time = time.time()
-        elapsed_time = end_time - start_time
+            response = requests.delete(url, headers=headers, timeout=timeout)
 
         return jsonify({
             'status_code': response.status_code,
             'headers': dict(response.headers),
-            'content': response.text,
-            'elapsed_time': f"{elapsed_time:.2f} seconds"
+            'content': response.text
         })
 
     except requests.exceptions.Timeout:
-        return jsonify({'error': f'The request timed out after {timeout} seconds'}), 504
+        return jsonify({'error': 'The request timed out after {} seconds'.format(timeout)}), 504
     except Exception as e:
-        return jsonify({'error': str(e)})
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
