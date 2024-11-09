@@ -11,5 +11,10 @@
       "src": "/(.*)",
       "dest": "apphttp.py"
     }
-  ]
+  ],
+  "functions": {
+    "api/**.py": {
+      "maxDuration": 60  // Tăng thời gian chờ lên 60 giây
+    }
+  }
 }
