@@ -1,16 +1,11 @@
 from flask import Flask, request, render_template, jsonify
 import requests
 import time
-import os
 
 app = Flask(__name__)
 
 # Thời gian chờ mặc định cho các yêu cầu HTTP (tính bằng giây)
-DEFAULT_TIMEOUT = 100  # thời gian chờ là 10 giây
-
-# Tạo một session để giữ kết nối HTTP lâu dài
-session = requests.Session()
-session.headers.update({'User-Agent': 'MyApp/1.0'})
+DEFAULT_TIMEOUT = 10  # thời gian chờ là 10 giây
 
 @app.route('/')
 def index():
@@ -38,13 +33,13 @@ def send_request():
     try:
         # Gửi yêu cầu HTTP với thời gian chờ và phương thức đã chọn
         if method == "GET":
-            response = session.get(url, headers=headers_dict, timeout=int(timeout))
+            response = requests.get(url, headers=headers_dict, timeout=int(timeout))
         elif method == "POST":
-            response = session.post(url, headers=headers_dict, json=data, timeout=int(timeout))
+            response = requests.post(url, headers=headers_dict, json=data, timeout=int(timeout))
         elif method == "PUT":
-            response = session.put(url, headers=headers_dict, json=data, timeout=int(timeout))
+            response = requests.put(url, headers=headers_dict, json=data, timeout=int(timeout))
         elif method == "DELETE":
-            response = session.delete(url, headers=headers_dict, timeout=int(timeout))
+            response = requests.delete(url, headers=headers_dict, timeout=int(timeout))
 
         # Tính toán thời gian thực hiện
         end_time = time.time()
@@ -61,9 +56,10 @@ def send_request():
         })
 
     except requests.exceptions.Timeout:
-        return jsonify({'error': 'The request timed out after {} seconds'.format(timeout)}), 504
+        return jsonify({'error': f'The request timed out after {timeout} seconds'}), 504
     except Exception as e:
         return jsonify({'error': str(e)})
 
 if __name__ == '__main__':
-    app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+    # Cấu hình Flask chạy trên host và port mặc định cho Vercel
+    app.run(debug=True, host='0.0.0.0', port=5000)
