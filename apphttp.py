@@ -18,17 +18,18 @@ def send_request():
     if headers:
         # Chuyển đổi headers từ chuỗi sang từ điển
         for line in headers.splitlines():
-            key, value = line.split(": ", 1)
-            headers_dict[key] = value
+            key_value = line.split(": ", 1)
+            if len(key_value) == 2:
+                headers_dict[key_value[0].strip()] = key_value[1].strip()
 
     try:
         # Gửi yêu cầu HTTP với phương thức đã chọn
         if method == "GET":
             response = requests.get(url, headers=headers_dict)
         elif method == "POST":
-            response = requests.post(url, headers=headers_dict, json=data)  # Thay đổi thành json nếu cần
+            response = requests.post(url, headers=headers_dict, json=data)  # Gửi dữ liệu dưới dạng JSON
         elif method == "PUT":
-            response = requests.put(url, headers=headers_dict, json=data)  # Thay đổi thành json nếu cần
+            response = requests.put(url, headers=headers_dict, json=data)  # Gửi dữ liệu dưới dạng JSON
         elif method == "DELETE":
             response = requests.delete(url, headers=headers_dict)
 
