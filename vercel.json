@@ -14,7 +14,7 @@
   ],
   "functions": {
     "api/**.py": {
-      "maxDuration": 60  // Tăng thời gian chờ lên 60 giây
+      "maxDuration": 60  
     }
   }
 }
