@@ -8,6 +8,10 @@ app = Flask(__name__)
 # Thời gian chờ mặc định cho các yêu cầu HTTP (tính bằng giây)
 DEFAULT_TIMEOUT = 10  # thời gian chờ là 10 giây
 
+# Tạo một session để giữ kết nối HTTP lâu dài
+session = requests.Session()
+session.headers.update({'User-Agent': 'MyApp/1.0'})
+
 @app.route('/')
 def index():
     return render_template('http.html')
@@ -34,13 +38,13 @@ def send_request():
     try:
         # Gửi yêu cầu HTTP với thời gian chờ và phương thức đã chọn
         if method == "GET":
-            response = requests.get(url, headers=headers_dict, timeout=int(timeout))
+            response = session.get(url, headers=headers_dict, timeout=int(timeout))
         elif method == "POST":
-            response = requests.post(url, headers=headers_dict, json=data, timeout=int(timeout))
+            response = session.post(url, headers=headers_dict, json=data, timeout=int(timeout))
         elif method == "PUT":
-            response = requests.put(url, headers=headers_dict, json=data, timeout=int(timeout))
+            response = session.put(url, headers=headers_dict, json=data, timeout=int(timeout))
         elif method == "DELETE":
-            response = requests.delete(url, headers=headers_dict, timeout=int(timeout))
+            response = session.delete(url, headers=headers_dict, timeout=int(timeout))
 
         # Tính toán thời gian thực hiện
         end_time = time.time()
@@ -62,4 +66,4 @@ def send_request():
         return jsonify({'error': str(e)})
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
