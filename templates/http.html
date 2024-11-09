@@ -67,6 +67,7 @@
     <script>
         const microphoneBtn = document.getElementById("microphone");
         let recognizing = false;
+        let recognition; // Để lưu trữ đối tượng nhận diện giọng nói
 
         function startListening() {
             if (!("webkitSpeechRecognition" in window)) {
@@ -74,9 +75,17 @@
                 return;
             }
 
-            const recognition = new webkitSpeechRecognition();
+            if (recognizing) {
+                // Nếu đang nhận diện, dừng lại
+                recognition.stop();
+                return;
+            }
+
+            // Khởi tạo nhận diện giọng nói
+            recognition = new webkitSpeechRecognition();
             recognition.lang = "vi-VN";  
-            recognition.interimResults = false;
+            recognition.interimResults = false; // Chỉ lấy kết quả cuối cùng
+            recognition.maxAlternatives = 1;
 
             recognition.onstart = function() {
                 recognizing = true;
@@ -90,8 +99,9 @@
                 microphoneBtn.innerText = "🎤";
 
                 const speechResult = event.results[0][0].transcript;
+                // Gán kết quả giọng nói vào URL để gửi yêu cầu
                 document.getElementById("url").value = `http://192.168.1.18/ask?prompt=${encodeURIComponent(speechResult)}`;
-                sendRequest();  
+                sendRequest();  // Gửi yêu cầu HTTP
             };
 
             recognition.onerror = function() {
@@ -107,9 +117,8 @@
                 microphoneBtn.innerText = "🎤";
             };
 
-            if (!recognizing) {
-                recognition.start();
-            }
+            // Bắt đầu nhận diện giọng nói
+            recognition.start();
         }
 
         function sendRequest() {
