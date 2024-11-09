@@ -1,5 +1,7 @@
 from flask import Flask, request, render_template, jsonify
 import requests
+import time
+import os
 
 app = Flask(__name__)
 
@@ -26,6 +28,9 @@ def send_request():
             if len(key_value) == 2:
                 headers_dict[key_value[0].strip()] = key_value[1].strip()
 
+    # Đo thời gian thực hiện yêu cầu
+    start_time = time.time()
+
     try:
         # Gửi yêu cầu HTTP với thời gian chờ và phương thức đã chọn
         if method == "GET":
@@ -37,10 +42,18 @@ def send_request():
         elif method == "DELETE":
             response = requests.delete(url, headers=headers_dict, timeout=int(timeout))
 
+        # Tính toán thời gian thực hiện
+        end_time = time.time()
+        elapsed_time = end_time - start_time  # thời gian thực hiện yêu cầu (tính bằng giây)
+
+        # Ghi log về thời gian thực hiện và các thông tin khác
+        app.logger.info(f"Request to {url} took {elapsed_time:.2f} seconds")
+
         return jsonify({
             'status_code': response.status_code,
             'headers': dict(response.headers),
-            'content': response.text
+            'content': response.text,
+            'elapsed_time': f"{elapsed_time:.2f} seconds"  # Thêm thời gian thực hiện vào kết quả
         })
 
     except requests.exceptions.Timeout:
